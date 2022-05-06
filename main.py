@@ -9,6 +9,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters import BoundFilter
 from aiogram.types import ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
 
+import hashlib
 import db as database
 from button.buttons_menu import buttons, user_buttons, help_button, help
 
@@ -124,7 +125,6 @@ async def delete_delete_profile(callback: types.CallbackQuery):
     await callback.answer(text=f'Запись под ID {num} удалена', show_alert=True)
 
 
-
 @dp.message_handler(commands=['удалить'])
 async def message_delete(message: types.Message):
     id = await database.load_delete()
@@ -135,7 +135,22 @@ async def message_delete(message: types.Message):
                              .add(InlineKeyboardButton(f'Удалить{i[0]}', callback_data=f'{i[0]}')))
 
 
-# USERS
+@dp.inline_handler()
+async def inline_handler(message: types.InlineQuery):
+    link = 'https://cloud.mail.ru/public/GvVj/mLDgcE6Ja'
+    response = [types.InlineQueryResultArticle(
+        id='my_profile',
+        title='Мое резюме',
+        url=link,
+        input_message_content=types.InputTextMessageContent(
+            message_text=f'#Резюме📌\n#Python🐍 \n#Django #SQL\n#Armenia🇦🇲🇦🇲\n#удаленка\n#полная #частичная \n#Junior '
+                         f'\nЖелаемая зарплата от 40.000р\n🎯Python разработчик \n📖GitHub: https://github.com/AleksZ8\n'
+                         f'\t✅Контакты \nмоб:+374 33-414-634 ВП,ТГ\nemail: alex.zurnachyan@bk.ru\n{link}'))]
+
+    await message.answer(response, is_personal=True)
+
+
+# other
 @dp.message_handler()
 async def other_messages(message: types.Message):
     await message.answer('Для просмотра доступных команд /help', reply_markup=help)
