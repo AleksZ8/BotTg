@@ -19,5 +19,3 @@ profile_button = ReplyKeyboardMarkup().row(b3, b2)
 help = ReplyKeyboardMarkup().add(b2)
 
 
-# delete = InlineKeyboardMarkup(row_with=1)
-# delete.add(InlineKeyboardButton(text='удалить', callback_data='delete_profile'))

@@ -7,7 +7,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters import BoundFilter
-from aiogram.types import ReplyKeyboardRemove
+from aiogram.types import ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
 
 import db as database
 from button.buttons_menu import buttons, user_buttons, help_button, help
@@ -36,20 +36,23 @@ async def start_on(_):
 
 
 # ADMINS
-@dp.message_handler(commands=['start', 'help', 'начать'], is_admin=True)
+@dp.message_handler(commands=['start', 'начать'], is_admin=True)
 async def com_start(message: types.Message):
     await database.db_load(message)
 
 
+@dp.edited_message_handler(commands=['посмотреть', 'профили'])
 @dp.message_handler(commands=['посмотреть', 'профили'])
 async def mes_send(message: types.Message):
     await database.db_load(message)
 
 
+@dp.edited_message_handler(commands=['помощь', 'help'])
 @dp.message_handler(commands=['помощь', 'help'])
 async def send_help(message: types.Message):
-    await message.answer(f'Перечень доступных команд.\nДля просмотра всех профилей /профили \n Для загрузки своего профиля /загрузить',
-                         reply_markup=help_button)
+    await message.answer(
+        f'Перечень доступных команд.\nДля просмотра всех профилей /профили \n Для загрузки своего профиля /загрузить',
+        reply_markup=help_button)
 
 
 # ADMIN
@@ -66,13 +69,13 @@ async def check_adm(message: types.Message):
 async def activ_fsm(message: types.Message):
     await FSMAdmin.photo.set()
     await message.reply('фото', reply_markup=ReplyKeyboardRemove())
+    await message.answer('Если вы передумали -> /отмена')
 
 
 async def load_photo(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['photo'] = message.photo[0].file_id
         await FSMAdmin.next()
-        await message.answer('Если вы передумали -> /отмена')
         await message.reply('имя')
 
 
@@ -88,7 +91,7 @@ async def text(message: types.Message, state: FSMContext):
         data['text'] = message.text
 
     await database.db_import(state)
-    await message.reply('Вы успешно загрузили профиль', reply_markup=user_buttons)
+    await message.reply('Вы успешно загрузили профиль')
     await state.finish()
 
 
@@ -111,6 +114,25 @@ def register_handlers_admin(dp: Dispatcher):
 
 
 register_handlers_admin(dp)
+
+
+# DELETE
+@dp.callback_query_handler(lambda x: x.data)
+async def delete_delete_profile(callback: types.CallbackQuery):
+    num = int(callback.data)
+    await database.db_delete(num)
+    await callback.answer(text=f'Запись под ID {num} удалена', show_alert=True)
+
+
+
+@dp.message_handler(commands=['удалить'])
+async def message_delete(message: types.Message):
+    id = await database.load_delete()
+    print(id)
+    for i in id:
+        print(i, i[0])
+        await message.answer(f'Профиль{i[0]}', reply_markup=InlineKeyboardMarkup()
+                             .add(InlineKeyboardButton(f'Удалить{i[0]}', callback_data=f'{i[0]}')))
 
 
 # USERS
